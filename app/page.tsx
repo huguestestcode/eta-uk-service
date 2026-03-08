@@ -73,11 +73,11 @@ const FAQS = [
   },
   {
     q: 'Quelle est la différence entre votre service et le site officiel ?',
-    a: 'Vous pouvez faire votre demande directement sur le site du gouvernement britannique en anglais, avec un délai de traitement variable. Notre service vous permet de déléguer entièrement la démarche : formulaire en français, agent IA qui soumet pour vous, et suivi inclus. Les frais gouvernementaux (£10/personne) sont inclus dans notre tarif.',
+    a: 'Vous pouvez faire votre demande directement sur le site du gouvernement britannique en anglais, avec un délai de traitement variable. Notre service vous permet de déléguer entièrement la démarche : formulaire en français, agent IA qui soumet pour vous, et suivi inclus. Les frais gouvernementaux (£16/personne) sont inclus dans notre tarif.',
   },
   {
     q: "Que se passe-t-il si ma demande est refusée ?",
-    a: 'En cas de refus, nous vous contactons immédiatement pour vous expliquer les raisons et explorer les alternatives. Nous remboursons nos frais de service (hors frais gouvernementaux de £10 non remboursables par le gouvernement UK).',
+    a: 'En cas de refus, nous vous contactons immédiatement pour vous expliquer les raisons et explorer les alternatives. Nous remboursons nos frais de service (hors frais gouvernementaux de £16 non remboursables par le gouvernement UK).',
   },
   {
     q: 'Dois-je imprimer mon ETA ?',
@@ -271,7 +271,7 @@ export default function HomePage() {
                   { icon: '🕐', title: 'Valable 2 ans', desc: 'Ou jusqu\'à l\'expiration de votre passeport' },
                   { icon: '🔄', title: 'Multi-entrées', desc: 'Voyages illimités pendant 2 ans' },
                   { icon: '📱', title: 'Sans papier', desc: 'Liée à votre passeport électroniquement' },
-                  { icon: '💶', title: 'Frais inclus', desc: 'Les £10 gouvernementaux sont dans notre tarif' },
+                  { icon: '💶', title: 'Frais inclus', desc: 'Les £16 gouvernementaux sont dans notre tarif' },
                 ].map((item) => (
                   <div key={item.title} className="card text-center">
                     <div className="text-3xl mb-2">{item.icon}</div>
@@ -317,7 +317,7 @@ export default function HomePage() {
 
             <div className="text-center mt-12">
               <Link href="/funnel" className="btn-primary">
-                Commencer ma demande – 39€/personne →
+                Commencer ma demande – 42€ HT/personne →
               </Link>
             </div>
           </div>
@@ -362,7 +362,7 @@ export default function HomePage() {
                     ['Support', 'Inclus', 'Non disponible'],
                     ['Groupe / famille', 'Une seule commande', 'Une par personne'],
                     ['Suivi par email', '✓ Inclus', '✗ Basique'],
-                    ['Tarif', '39€/pers. tout compris', '£10/pers. + erreurs potentielles'],
+                    ['Tarif', '42€ HT/pers. tout compris', '£10/pers. + erreurs potentielles'],
                   ].map(([crit, nous, officiel], i) => (
                     <tr key={crit} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                       <td className="px-6 py-3 font-medium text-navy-900">{crit}</td>
@@ -392,12 +392,13 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2 bg-gold-500 text-white text-sm font-bold px-4 py-1.5 rounded-full mb-6">
                   ⭐ Offre tout compris
                 </div>
-                <div className="text-7xl font-extrabold mb-2">39<span className="text-4xl">€</span></div>
-                <div className="text-white/70 text-lg mb-6">par personne</div>
+                <div className="text-7xl font-extrabold mb-1">42<span className="text-4xl">€</span><span className="text-2xl font-semibold"> HT</span></div>
+                <div className="text-white/50 text-sm mb-1">50€ TTC par personne</div>
+                <div className="text-white/70 text-base mb-6">frais gouvernementaux inclus</div>
 
                 <div className="bg-white/10 rounded-2xl p-6 text-left mb-8 space-y-3">
                   {[
-                    '✓ Frais gouvernementaux UK (£10) inclus',
+                    '✓ Frais gouvernementaux UK (£16) inclus',
                     '✓ Formulaire en français',
                     '✓ Soumission par agent IA',
                     '✓ Suivi de demande par email',
@@ -420,12 +421,13 @@ export default function HomePage() {
 
               <div className="grid grid-cols-3 gap-4 mt-6">
                 {[
-                  { n: '1', price: '39€', label: '1 voyageur' },
-                  { n: '2', price: '78€', label: '2 voyageurs' },
-                  { n: '4', price: '156€', label: '4 voyageurs' },
+                  { n: '1', price: '42€ HT', sub: '50€ TTC', label: '1 voyageur' },
+                  { n: '2', price: '84€ HT', sub: '100€ TTC', label: '2 voyageurs' },
+                  { n: '4', price: '168€ HT', sub: '200€ TTC', label: '4 voyageurs' },
                 ].map((ex) => (
                   <div key={ex.n} className="card text-center">
-                    <div className="text-2xl font-extrabold text-navy-900">{ex.price}</div>
+                    <div className="text-xl font-extrabold text-navy-900">{ex.price}</div>
+                    <div className="text-xs text-gray-400">{ex.sub}</div>
                     <div className="text-sm text-gray-500 mt-1">{ex.label}</div>
                   </div>
                 ))}
@@ -501,7 +503,7 @@ export default function HomePage() {
               notre agent IA fait le reste.
             </p>
             <Link href="/funnel" className="btn-primary text-xl px-12 py-5">
-              Obtenir mon ETA – 39€/personne →
+              Obtenir mon ETA – 42€ HT/personne →
             </Link>
             <p className="text-white/40 text-sm mt-6">
               Service disponible 24h/24 · 7j/7 · Traitement immédiat
@@ -548,7 +550,7 @@ export default function HomePage() {
             <p>© {new Date().getFullYear()} ETA UK Service. Tous droits réservés.</p>
             <p className="text-center max-w-md">
               ETA·UK est un service tiers privé, non affilié au gouvernement britannique (HMPO / Home Office).
-              Les frais gouvernementaux de £10 sont inclus dans notre tarif.
+              Les frais gouvernementaux de £16 sont inclus dans notre tarif.
             </p>
           </div>
         </div>

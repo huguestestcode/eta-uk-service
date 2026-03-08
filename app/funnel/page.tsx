@@ -6,9 +6,12 @@ import Link from 'next/link'
 
 const TRAVELER_OPTIONS = [1, 2, 3, 4, 5, 6]
 
-const PRICE_SERVICE = 24
-const PRICE_GOV_EUR = 26
-const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 50€
+const PRICE_SERVICE_HT  = 20
+const PRICE_SERVICE_TTC = 24
+const PRICE_GOV_HT      = 22  // ≈ £16
+const PRICE_GOV_TTC     = 26
+const PRICE_TOTAL_HT    = PRICE_SERVICE_HT  + PRICE_GOV_HT   // 42€
+const PRICE_TOTAL_TTC   = PRICE_SERVICE_TTC + PRICE_GOV_TTC  // 50€
 
 export default function FunnelPage() {
   const router = useRouter()
@@ -18,9 +21,12 @@ export default function FunnelPage() {
   const [emailConfirmed, setEmailConfirmed] = useState(false)
   const [emailError,    setEmailError]    = useState('')
 
-  const totalService = numTravelers * PRICE_SERVICE
-  const totalGovEUR  = numTravelers * PRICE_GOV_EUR
-  const total        = numTravelers * PRICE_TOTAL
+  const totalServiceHT  = numTravelers * PRICE_SERVICE_HT
+  const totalServiceTTC = numTravelers * PRICE_SERVICE_TTC
+  const totalGovHT      = numTravelers * PRICE_GOV_HT
+  const totalGovTTC     = numTravelers * PRICE_GOV_TTC
+  const totalHT         = numTravelers * PRICE_TOTAL_HT
+  const totalTTC        = numTravelers * PRICE_TOTAL_TTC
 
   function confirmEmail() {
     setEmailError('')
@@ -224,15 +230,15 @@ export default function FunnelPage() {
                       </div>
                       <div className="flex justify-between text-gray-700">
                         <span>Frais de service</span>
-                        <span>{totalService}€</span>
+                        <span className="text-right"><span className="font-semibold">{totalServiceHT}€ HT</span> <span className="text-gray-400 text-xs">{totalServiceTTC}€ TTC</span></span>
                       </div>
                       <div className="flex justify-between text-gray-700">
                         <span>Frais gouvernementaux UK</span>
-                        <span>{totalGovEUR}€</span>
+                        <span className="text-right"><span className="font-semibold">~{totalGovHT}€ HT</span> <span className="text-gray-400 text-xs">~{totalGovTTC}€ TTC</span></span>
                       </div>
                       <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
                         <span>Total</span>
-                        <span>{total}€ TTC</span>
+                        <span className="text-right"><span>{totalHT}€ HT</span> <span className="text-gray-400 text-xs font-normal">{totalTTC}€ TTC</span></span>
                       </div>
                     </div>
 
@@ -268,15 +274,15 @@ export default function FunnelPage() {
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>Frais de service</span>
-                    <span>{totalService}€</span>
+                    <span className="text-right"><span className="font-semibold">{totalServiceHT}€ HT</span> <span className="text-gray-400 text-xs">{totalServiceTTC}€ TTC</span></span>
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>Frais gouvernementaux UK</span>
-                    <span>{totalGovEUR}€</span>
+                    <span className="text-right"><span className="font-semibold">~{totalGovHT}€ HT</span> <span className="text-gray-400 text-xs">~{totalGovTTC}€ TTC</span></span>
                   </div>
                   <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
                     <span>Total</span>
-                    <span>{total}€ TTC</span>
+                    <span className="text-right"><span>{totalHT}€ HT</span> <span className="text-gray-400 text-xs font-normal">{totalTTC}€ TTC</span></span>
                   </div>
                 </div>
               </div>

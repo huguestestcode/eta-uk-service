@@ -6,9 +6,12 @@ import Link from 'next/link'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const PRICE_SERVICE = 24
-const PRICE_GOV_EUR = 26
-const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 50€
+const PRICE_SERVICE_HT  = 20
+const PRICE_SERVICE_TTC = 24
+const PRICE_GOV_HT      = 22  // ≈ £16
+const PRICE_GOV_TTC     = 26
+const PRICE_TOTAL_HT    = PRICE_SERVICE_HT  + PRICE_GOV_HT   // 42€
+const PRICE_TOTAL_TTC   = PRICE_SERVICE_TTC + PRICE_GOV_TTC  // 50€
 
 const MOIS = [
   { v: '01', l: 'Janvier' }, { v: '02', l: 'Février' }, { v: '03', l: 'Mars' },
@@ -300,9 +303,12 @@ function TravelerCard({
 // ─── Sidebar récap ────────────────────────────────────────────────────────────
 
 function OrderSidebar({ numTravelers, loading }: { numTravelers: number; loading: boolean }) {
-  const totalService = numTravelers * PRICE_SERVICE
-  const totalGovEUR  = numTravelers * PRICE_GOV_EUR
-  const total        = numTravelers * PRICE_TOTAL
+  const totalServiceHT  = numTravelers * PRICE_SERVICE_HT
+  const totalServiceTTC = numTravelers * PRICE_SERVICE_TTC
+  const totalGovHT      = numTravelers * PRICE_GOV_HT
+  const totalGovTTC     = numTravelers * PRICE_GOV_TTC
+  const totalHT         = numTravelers * PRICE_TOTAL_HT
+  const totalTTC        = numTravelers * PRICE_TOTAL_TTC
 
   return (
     <div className="space-y-4">
@@ -316,15 +322,15 @@ function OrderSidebar({ numTravelers, loading }: { numTravelers: number; loading
           </div>
           <div className="flex justify-between text-gray-700">
             <span>Frais de service</span>
-            <span>{totalService}€</span>
+            <span className="text-right"><span className="font-semibold">{totalServiceHT}€ HT</span> <span className="text-gray-400 text-xs">{totalServiceTTC}€ TTC</span></span>
           </div>
           <div className="flex justify-between text-gray-700">
             <span>Frais gouvernementaux UK</span>
-            <span>{totalGovEUR}€</span>
+            <span className="text-right"><span className="font-semibold">~{totalGovHT}€ HT</span> <span className="text-gray-400 text-xs">~{totalGovTTC}€ TTC</span></span>
           </div>
           <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
             <span>Total</span>
-            <span>{total}€ TTC</span>
+            <span className="text-right"><span>{totalHT}€ HT</span> <span className="text-gray-400 text-xs font-normal">{totalTTC}€ TTC</span></span>
           </div>
         </div>
       </div>
@@ -344,7 +350,7 @@ function OrderSidebar({ numTravelers, loading }: { numTravelers: number; loading
             Chargement…
           </>
         ) : (
-          <>Payer {total}€ et continuer</>
+          <>Payer {totalHT}€ HT <span className="text-white/60 text-xs font-normal">({totalTTC}€ TTC)</span> et continuer</>
         )}
       </button>
 
