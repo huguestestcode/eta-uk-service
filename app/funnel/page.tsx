@@ -6,38 +6,58 @@ import Link from 'next/link'
 
 const TRAVELER_OPTIONS = [1, 2, 3, 4, 5, 6]
 
+// Prix
+const PRICE_SERVICE = 27   // € par personne
+const PRICE_GOV_GBP = 10   // £ par personne
+const PRICE_GOV_EUR = 12   // € équivalent
+const PRICE_TOTAL = PRICE_SERVICE + PRICE_GOV_EUR // 39€
+
 export default function FunnelPage() {
   const router = useRouter()
   const [numTravelers, setNumTravelers] = useState(1)
   const [email, setEmail] = useState('')
-  const [emailConfirm, setEmailConfirm] = useState('')
-  const [error, setError] = useState('')
+  const [emailInput, setEmailInput] = useState('')
+  const [emailConfirmed, setEmailConfirmed] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
-  const total = numTravelers * 39
+  const totalService = numTravelers * PRICE_SERVICE
+  const totalGovGBP  = numTravelers * PRICE_GOV_GBP
+  const totalGovEUR  = numTravelers * PRICE_GOV_EUR
+  const total        = numTravelers * PRICE_TOTAL
+
+  // Avancement de l'étape 1
+  const travelersOk = numTravelers >= 1
+  const emailOk     = emailConfirmed
+
+  function confirmEmail() {
+    setEmailError('')
+    if (!emailInput.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setEmailError('Veuillez saisir une adresse email valide.')
+      return
+    }
+    setEmail(emailInput)
+    setEmailConfirmed(true)
+  }
+
+  function editEmail() {
+    setEmailConfirmed(false)
+    setEmailInput(email)
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Veuillez saisir une adresse email valide.')
+    if (!emailConfirmed) {
+      setEmailError('Veuillez confirmer votre email avant de continuer.')
       return
     }
-    if (email !== emailConfirm) {
-      setError('Les deux adresses email ne correspondent pas.')
-      return
-    }
-
-    // Stocker email pour l'étape suivante
     sessionStorage.setItem('eta_email', email)
     sessionStorage.setItem('eta_num_travelers', String(numTravelers))
-
     router.push(`/funnel/identite?n=${numTravelers}`)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy-50 to-white flex flex-col">
-      {/* Header minimal */}
+      {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-1">
           <span className="text-xl font-extrabold text-navy-900">ETA</span>
@@ -51,7 +71,7 @@ export default function FunnelPage() {
         </div>
       </header>
 
-      {/* Indicateur d'étapes */}
+      {/* Barre de progression globale — 3 étapes */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 text-sm">
@@ -70,6 +90,22 @@ export default function FunnelPage() {
               Paiement
             </div>
           </div>
+
+          {/* Mini-checklist de l'étape 1 */}
+          <div className="flex items-center gap-6 mt-3 text-xs">
+            <span className={`flex items-center gap-1.5 font-medium ${travelersOk ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${travelersOk ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                {travelersOk ? '✓' : '·'}
+              </span>
+              Voyageurs
+            </span>
+            <span className={`flex items-center gap-1.5 font-medium ${emailOk ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${emailOk ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                {emailOk ? '✓' : '·'}
+              </span>
+              Email confirmé
+            </span>
+          </div>
         </div>
       </div>
 
@@ -80,16 +116,24 @@ export default function FunnelPage() {
               Votre demande ETA UK
             </h1>
             <p className="text-gray-500 mt-2">
-              Commencez par nous indiquer le nombre de voyageurs et votre email.
+              Indiquez le nombre de voyageurs et votre email pour commencer.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nombre de voyageurs */}
             <div className="card">
-              <h2 className="font-bold text-navy-900 text-lg mb-1">
-                Nombre de voyageurs
-              </h2>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-bold text-navy-900 text-lg">Nombre de voyageurs</h2>
+                {travelersOk && (
+                  <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Sélectionné
+                  </span>
+                )}
+              </div>
               <p className="text-gray-500 text-sm mb-4">
                 Vous + vos accompagnants. Chaque ETA est individuelle et liée à un passeport.
               </p>
@@ -111,62 +155,104 @@ export default function FunnelPage() {
                 ))}
               </div>
 
-              {numTravelers > 0 && (
-                <div className="mt-4 p-3 bg-navy-50 rounded-xl flex items-center justify-between">
-                  <span className="text-navy-700 font-medium text-sm">
-                    {numTravelers} voyageur{numTravelers > 1 ? 's' : ''} × 39€
+              {/* Détail des prix */}
+              <div className="mt-4 rounded-xl border border-gray-100 overflow-hidden text-sm">
+                <div className="px-4 py-2.5 flex justify-between bg-gray-50 text-gray-600">
+                  <span>Frais de service ETA·UK × {numTravelers}</span>
+                  <span>{totalService}€</span>
+                </div>
+                <div className="px-4 py-2.5 flex justify-between text-gray-600 border-t border-gray-100">
+                  <span>
+                    Frais gouvernementaux UK × {numTravelers}
+                    <span className="ml-1 text-xs text-gray-400">(£{PRICE_GOV_GBP}/pers. ≈ {PRICE_GOV_EUR}€)</span>
                   </span>
-                  <span className="font-extrabold text-navy-900 text-lg">{total}€ TTC</span>
+                  <span>£{totalGovGBP} <span className="text-gray-400 text-xs">≈ {totalGovEUR}€</span></span>
+                </div>
+                <div className="px-4 py-2.5 flex justify-between font-extrabold text-navy-900 bg-navy-50 border-t border-navy-100">
+                  <span>Total TTC</span>
+                  <span>{total}€</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Email avec confirmation par bouton */}
+            <div className="card space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-navy-900 text-lg">Votre adresse email</h2>
+                {emailOk && (
+                  <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Confirmé
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-500 text-sm -mt-2">
+                Vous recevrez la confirmation de commande et vos résultats ETA à cette adresse.
+              </p>
+
+              {emailConfirmed ? (
+                /* État : email confirmé */
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-green-800 font-medium text-sm">{email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={editEmail}
+                    className="text-xs text-green-700 underline hover:text-green-900 font-medium"
+                  >
+                    Modifier
+                  </button>
+                </div>
+              ) : (
+                /* État : saisie de l'email */
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => { setEmailInput(e.target.value); setEmailError('') }}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), confirmEmail())}
+                      placeholder="vous@example.fr"
+                      className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-navy-500 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={confirmEmail}
+                      className="px-5 py-3 bg-navy-900 hover:bg-navy-800 text-white font-semibold rounded-xl transition-colors whitespace-nowrap"
+                    >
+                      Confirmer
+                    </button>
+                  </div>
+                  {emailError && (
+                    <p className="text-red-600 text-sm">{emailError}</p>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Email */}
-            <div className="card space-y-4">
-              <h2 className="font-bold text-navy-900 text-lg">
-                Votre adresse email
-              </h2>
-              <p className="text-gray-500 text-sm -mt-2">
-                Nous vous enverrons la confirmation de commande et les résultats ETA à cette adresse.
-              </p>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@example.fr"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-navy-500 transition-colors"
-                />
+            {/* Récapitulatif final */}
+            <div className="bg-navy-900 text-white rounded-2xl p-5">
+              <div className="space-y-2 text-sm text-white/80 mb-4">
+                <div className="flex justify-between">
+                  <span>Frais de service × {numTravelers}</span>
+                  <span>{totalService}€</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Frais gouvernementaux UK × {numTravelers}</span>
+                  <span>£{totalGovGBP} <span className="text-white/50 text-xs">≈ {totalGovEUR}€</span></span>
+                </div>
               </div>
-
-              <div>
-                <label htmlFor="emailConfirm" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirmez l'email
-                </label>
-                <input
-                  id="emailConfirm"
-                  type="email"
-                  value={emailConfirm}
-                  onChange={(e) => setEmailConfirm(e.target.value)}
-                  placeholder="vous@example.fr"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-navy-500 transition-colors"
-                />
+              <div className="flex justify-between font-extrabold text-lg border-t border-white/20 pt-3">
+                <span>Total</span>
+                <span>{total}€ TTC</span>
               </div>
             </div>
-
-            {/* Erreur */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
 
             {/* Disclaimer */}
             <p className="text-xs text-gray-400 text-center leading-relaxed">
@@ -178,9 +264,10 @@ export default function FunnelPage() {
 
             <button
               type="submit"
-              className="w-full bg-gold-500 hover:bg-gold-600 text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
+              disabled={!emailConfirmed}
+              className="w-full bg-gold-500 hover:bg-gold-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
             >
-              Continuer
+              Continuer — Saisir les identités
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>

@@ -322,7 +322,13 @@ function IdentitePageInner() {
     }
   }
 
-  const total = numTravelers * 39
+  const PRICE_SERVICE = 27
+  const PRICE_GOV_GBP = 10
+  const PRICE_GOV_EUR = 12
+  const total         = numTravelers * (PRICE_SERVICE + PRICE_GOV_EUR)
+  const totalService  = numTravelers * PRICE_SERVICE
+  const totalGovGBP   = numTravelers * PRICE_GOV_GBP
+  const totalGovEUR   = numTravelers * PRICE_GOV_EUR
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -392,17 +398,14 @@ function IdentitePageInner() {
 
             {/* Récapitulatif prix */}
             <div className="bg-navy-900 text-white rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold">Récapitulatif</span>
-              </div>
               <div className="space-y-2 text-sm text-white/80 mb-4">
                 <div className="flex justify-between">
-                  <span>ETA UK × {numTravelers} personne{numTravelers > 1 ? 's' : ''}</span>
-                  <span>{total}€</span>
+                  <span>Frais de service ETA·UK × {numTravelers}</span>
+                  <span>{totalService}€</span>
                 </div>
-                <div className="flex justify-between text-xs text-white/50">
-                  <span>dont frais gouvernementaux UK inclus</span>
-                  <span>{numTravelers * 10}£ (~{Math.round(numTravelers * 11.5)}€)</span>
+                <div className="flex justify-between">
+                  <span>Frais gouvernementaux UK × {numTravelers} <span className="text-white/50 text-xs">(£{PRICE_GOV_GBP}/pers.)</span></span>
+                  <span>£{totalGovGBP} <span className="text-white/50 text-xs">≈ {totalGovEUR}€</span></span>
                 </div>
               </div>
               <div className="flex justify-between font-extrabold text-lg border-t border-white/20 pt-3">
