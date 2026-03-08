@@ -60,11 +60,11 @@ interface TravelerForm {
   dob_annee: string
   lieu_naissance: string
   nationalite: string
+  passport_later: boolean
   num_passeport: string
   exp_jour: string
   exp_mois: string
   exp_annee: string
-  email: string
   sexe: string
   criminal_record: boolean
   travel_ban: boolean
@@ -74,9 +74,10 @@ const EMPTY: TravelerForm = {
   prenom: '', nom: '',
   dob_jour: '', dob_mois: '', dob_annee: '',
   lieu_naissance: '', nationalite: 'France',
+  passport_later: false,
   num_passeport: '',
   exp_jour: '', exp_mois: '', exp_annee: '',
-  email: '', sexe: '',
+  sexe: '',
   criminal_record: false, travel_ban: false,
 }
 
@@ -197,12 +198,6 @@ function TravelerCard({
             </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <Label required>Adresse email</Label>
-            <Input value={data.email} onChange={set('email')} type="email" placeholder="Pour recevoir vos résultats ETA" />
-          </div>
-
           {/* Sexe */}
           <div>
             <Label required>Sexe (tel qu'indiqué sur le passeport)</Label>
@@ -231,28 +226,43 @@ function TravelerCard({
               </Select>
             </div>
 
-            <div>
-              <Label required>Numéro de passeport</Label>
-              <Input value={data.num_passeport} onChange={set('num_passeport')} placeholder="Ex : 12AB34567" />
-            </div>
+            {/* Case "remplir plus tard" */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={data.passport_later}
+                onChange={(e) => set('passport_later')(e.target.checked as boolean)}
+                className="w-4 h-4 rounded border-gray-300 text-navy-600"
+              />
+              <span className="text-sm text-gray-700">Ajouter les détails du passeport plus tard</span>
+            </label>
 
-            <div>
-              <Label required>Date d'expiration du passeport</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Select value={data.exp_mois} onChange={set('exp_mois')}>
-                  <option value="">Mois</option>
-                  {MOIS.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
-                </Select>
-                <Select value={data.exp_jour} onChange={set('exp_jour')}>
-                  <option value="">Jour</option>
-                  {JOURS.map((j) => <option key={j} value={j}>{j}</option>)}
-                </Select>
-                <Select value={data.exp_annee} onChange={set('exp_annee')}>
-                  <option value="">Année</option>
-                  {ANNEES_EXPIRY.map((a) => <option key={a} value={a}>{a}</option>)}
-                </Select>
-              </div>
-            </div>
+            {!data.passport_later && (
+              <>
+                <div>
+                  <Label required>Numéro de passeport</Label>
+                  <Input value={data.num_passeport} onChange={set('num_passeport')} placeholder="Ex : 12AB34567" />
+                </div>
+
+                <div>
+                  <Label required>Date d'expiration du passeport</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={data.exp_mois} onChange={set('exp_mois')}>
+                      <option value="">Mois</option>
+                      {MOIS.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
+                    </Select>
+                    <Select value={data.exp_jour} onChange={set('exp_jour')}>
+                      <option value="">Jour</option>
+                      {JOURS.map((j) => <option key={j} value={j}>{j}</option>)}
+                    </Select>
+                    <Select value={data.exp_annee} onChange={set('exp_annee')}>
+                      <option value="">Année</option>
+                      {ANNEES_EXPIRY.map((a) => <option key={a} value={a}>{a}</option>)}
+                    </Select>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Déclarations */}
@@ -399,7 +409,7 @@ function IdentitePageInner() {
         setOpenCards((prev) => prev.map((v, idx) => idx === i ? true : v))
         return
       }
-      if (!t.exp_jour || !t.exp_mois || !t.exp_annee) {
+      if (!t.passport_later && (!t.exp_jour || !t.exp_mois || !t.exp_annee)) {
         setError(`Date d'expiration du passeport incomplète pour le voyageur ${i + 1}.`)
         setOpenCards((prev) => prev.map((v, idx) => idx === i ? true : v))
         return
@@ -415,9 +425,8 @@ function IdentitePageInner() {
       date_naissance: `${t.dob_annee}-${t.dob_mois}-${t.dob_jour}`,
       lieu_naissance: t.lieu_naissance,
       nationalite: t.nationalite,
-      num_passeport: t.num_passeport,
-      expiry_passeport: `${t.exp_annee}-${t.exp_mois}-${t.exp_jour}`,
-      email: t.email,
+      num_passeport: t.passport_later ? null : t.num_passeport,
+      expiry_passeport: t.passport_later ? null : `${t.exp_annee}-${t.exp_mois}-${t.exp_jour}`,
       sexe: t.sexe,
     }))
 
