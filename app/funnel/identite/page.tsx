@@ -6,10 +6,9 @@ import Link from 'next/link'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const PRICE_SERVICE = 20
-const PRICE_GOV_GBP = 16
-const PRICE_GOV_EUR = 19
-const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 39€
+const PRICE_SERVICE = 24
+const PRICE_GOV_EUR = 26
+const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 50€
 
 const MOIS = [
   { v: '01', l: 'Janvier' }, { v: '02', l: 'Février' }, { v: '03', l: 'Mars' },
@@ -292,7 +291,6 @@ function TravelerCard({
 
 function OrderSidebar({ numTravelers, loading }: { numTravelers: number; loading: boolean }) {
   const totalService = numTravelers * PRICE_SERVICE
-  const totalGovGBP  = numTravelers * PRICE_GOV_GBP
   const totalGovEUR  = numTravelers * PRICE_GOV_EUR
   const total        = numTravelers * PRICE_TOTAL
 
@@ -312,7 +310,7 @@ function OrderSidebar({ numTravelers, loading }: { numTravelers: number; loading
           </div>
           <div className="flex justify-between text-gray-700">
             <span>Frais gouvernementaux UK</span>
-            <span>£{totalGovGBP} <span className="text-gray-400 text-xs">≈ {totalGovEUR}€</span></span>
+            <span>{totalGovEUR}€</span>
           </div>
           <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
             <span>Total</span>

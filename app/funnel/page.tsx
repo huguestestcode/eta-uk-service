@@ -6,10 +6,9 @@ import Link from 'next/link'
 
 const TRAVELER_OPTIONS = [1, 2, 3, 4, 5, 6]
 
-const PRICE_SERVICE = 20
-const PRICE_GOV_GBP = 16
-const PRICE_GOV_EUR = 19
-const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 39€
+const PRICE_SERVICE = 24
+const PRICE_GOV_EUR = 26
+const PRICE_TOTAL   = PRICE_SERVICE + PRICE_GOV_EUR // 50€
 
 export default function FunnelPage() {
   const router = useRouter()
@@ -20,7 +19,6 @@ export default function FunnelPage() {
   const [emailError,    setEmailError]    = useState('')
 
   const totalService = numTravelers * PRICE_SERVICE
-  const totalGovGBP  = numTravelers * PRICE_GOV_GBP
   const totalGovEUR  = numTravelers * PRICE_GOV_EUR
   const total        = numTravelers * PRICE_TOTAL
 
@@ -230,7 +228,7 @@ export default function FunnelPage() {
                       </div>
                       <div className="flex justify-between text-gray-700">
                         <span>Frais gouvernementaux UK</span>
-                        <span>£{totalGovGBP} <span className="text-gray-400 text-xs">≈ {totalGovEUR}€</span></span>
+                        <span>{totalGovEUR}€</span>
                       </div>
                       <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
                         <span>Total</span>
@@ -274,7 +272,7 @@ export default function FunnelPage() {
                   </div>
                   <div className="flex justify-between text-gray-700">
                     <span>Frais gouvernementaux UK</span>
-                    <span>£{totalGovGBP} <span className="text-gray-400 text-xs">≈ {totalGovEUR}€</span></span>
+                    <span>{totalGovEUR}€</span>
                   </div>
                   <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold text-gray-900">
                     <span>Total</span>
