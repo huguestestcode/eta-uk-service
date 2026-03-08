@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    if (order.status !== 'pending_payment') {
+    if (order.status !== 'pending_payment' && order.status !== 'identity_submitted') {
       return NextResponse.json({ received: true })
     }
 
@@ -45,14 +45,27 @@ export async function POST(req: NextRequest) {
         : undefined,
     })
 
-    await initTravelers(order.id, order.num_travelers)
-
     try {
       await sendPaymentConfirmation(order.email, order.id, order.num_travelers)
     } catch (err) {
       console.error('[webhook] Erreur email:', err)
     }
+
+    if (order.status === 'identity_submitted') {
+      // Les identités sont déjà en base → lancer l'agent directement
+      launchAgent(order.id, order.email).catch((err) => {
+        console.error('[webhook] Agent error:', err)
+      })
+    } else {
+      // Ancien flux : créer les slots voyageurs vides
+      await initTravelers(order.id, order.num_travelers)
+    }
   }
 
   return NextResponse.json({ received: true })
+}
+
+async function launchAgent(orderId: string, email: string): Promise<void> {
+  const { processOrder } = await import('@/lib/eta-agent')
+  await processOrder(orderId, email)
 }

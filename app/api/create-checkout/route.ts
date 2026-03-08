@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, SERVICE_PRICE_CENTS } from '@/lib/stripe'
-import { createOrder } from '@/lib/db'
+import { createOrder, insertTravelers, TravelerInput } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, numTravelers } = await req.json()
+    const { email, numTravelers, travelers } = await req.json() as {
+      email: string
+      numTravelers: number
+      travelers?: TravelerInput[]
+    }
 
     // Validation basique
     if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -14,7 +18,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nombre de voyageurs invalide.' }, { status: 400 })
     }
 
+    const hasTravelers = Array.isArray(travelers) && travelers.length > 0
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+
+    const successUrl = hasTravelers
+      ? `${baseUrl}/confirmation?order_id={CHECKOUT_SESSION_ID}`
+      : `${baseUrl}/funnel/identite?order_id={CHECKOUT_SESSION_ID}&n=${numTravelers}`
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -34,7 +43,7 @@ export async function POST(req: NextRequest) {
           quantity: numTravelers,
         },
       ],
-      success_url: `${baseUrl}/funnel/identite?order_id={CHECKOUT_SESSION_ID}&n=${numTravelers}`,
+      success_url: successUrl,
       cancel_url: `${baseUrl}/funnel?cancelled=1`,
       metadata: {
         num_travelers: String(numTravelers),
@@ -46,7 +55,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Impossible de créer la session de paiement.' }, { status: 500 })
     }
 
-    await createOrder(email, numTravelers, session.id)
+    const status = hasTravelers ? 'identity_submitted' : 'pending_payment'
+    const order = await createOrder(email, numTravelers, session.id, status)
+
+    if (hasTravelers) {
+      await insertTravelers(order.id, travelers!)
+    }
 
     return NextResponse.json({ url: session.url })
   } catch (err) {

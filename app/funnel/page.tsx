@@ -11,12 +11,11 @@ export default function FunnelPage() {
   const [numTravelers, setNumTravelers] = useState(1)
   const [email, setEmail] = useState('')
   const [emailConfirm, setEmailConfirm] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const total = numTravelers * 39
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
@@ -29,28 +28,11 @@ export default function FunnelPage() {
       return
     }
 
-    setLoading(true)
-    try {
-      const res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, numTravelers }),
-      })
+    // Stocker email pour l'étape suivante
+    sessionStorage.setItem('eta_email', email)
+    sessionStorage.setItem('eta_num_travelers', String(numTravelers))
 
-      const data = await res.json()
-
-      if (!res.ok || !data.url) {
-        setError(data.error ?? 'Une erreur est survenue. Veuillez réessayer.')
-        return
-      }
-
-      // Redirection vers Stripe Checkout
-      window.location.href = data.url
-    } catch {
-      setError('Erreur de connexion. Veuillez vérifier votre connexion et réessayer.')
-    } finally {
-      setLoading(false)
-    }
+    router.push(`/funnel/identite?n=${numTravelers}`)
   }
 
   return (
@@ -80,12 +62,12 @@ export default function FunnelPage() {
             <div className="flex-1 h-0.5 bg-gray-200 rounded" />
             <div className="flex items-center gap-1.5 text-gray-400">
               <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-400 text-xs flex items-center justify-center font-bold">2</div>
-              Paiement
+              Identités
             </div>
             <div className="flex-1 h-0.5 bg-gray-200 rounded" />
             <div className="flex items-center gap-1.5 text-gray-400">
               <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-400 text-xs flex items-center justify-center font-bold">3</div>
-              Identités
+              Paiement
             </div>
           </div>
         </div>
@@ -179,27 +161,6 @@ export default function FunnelPage() {
               </div>
             </div>
 
-            {/* Récapitulatif */}
-            <div className="bg-navy-900 text-white rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold">Récapitulatif</span>
-              </div>
-              <div className="space-y-2 text-sm text-white/80 mb-4">
-                <div className="flex justify-between">
-                  <span>ETA UK × {numTravelers} personne{numTravelers > 1 ? 's' : ''}</span>
-                  <span>{total}€</span>
-                </div>
-                <div className="flex justify-between text-xs text-white/50">
-                  <span>dont frais gouvernementaux UK inclus</span>
-                  <span>{numTravelers * 10}£ (~{Math.round(numTravelers * 11.5)}€)</span>
-                </div>
-              </div>
-              <div className="flex justify-between font-extrabold text-lg border-t border-white/20 pt-3">
-                <span>Total</span>
-                <span>{total}€ TTC</span>
-              </div>
-            </div>
-
             {/* Erreur */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
@@ -217,25 +178,12 @@ export default function FunnelPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gold-500 hover:bg-gold-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
+              className="w-full bg-gold-500 hover:bg-gold-600 text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Chargement…
-                </>
-              ) : (
-                <>
-                  Payer {total}€ – Étape suivante
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </>
-              )}
+              Continuer
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </button>
 
             {/* Garanties */}

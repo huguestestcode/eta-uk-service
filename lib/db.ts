@@ -86,14 +86,53 @@ export async function initSchema(): Promise<void> {
 export async function createOrder(
   email: string,
   numTravelers: number,
-  stripeSessionId: string
+  stripeSessionId: string,
+  status: OrderStatus = 'pending_payment'
 ): Promise<Order> {
   const id = uuidv4()
   await sql`
-    INSERT INTO orders (id, email, num_travelers, stripe_session_id)
-    VALUES (${id}, ${email}, ${numTravelers}, ${stripeSessionId})
+    INSERT INTO orders (id, email, num_travelers, stripe_session_id, status)
+    VALUES (${id}, ${email}, ${numTravelers}, ${stripeSessionId}, ${status})
   `
   return (await getOrder(id))!
+}
+
+export interface TravelerInput {
+  prenom: string
+  nom: string
+  date_naissance: string
+  lieu_naissance: string
+  nationalite: string
+  num_passeport: string
+  expiry_passeport: string
+  email: string
+  sexe: string
+}
+
+export async function insertTravelers(
+  orderId: string,
+  travelers: TravelerInput[]
+): Promise<void> {
+  for (const t of travelers) {
+    const id = uuidv4()
+    await sql`
+      INSERT INTO travelers
+        (id, order_id, prenom, nom, date_naissance, lieu_naissance,
+         nationalite, num_passeport, expiry_passeport, email, sexe, eta_status)
+      VALUES
+        (${id}, ${orderId},
+         ${t.prenom.trim().toUpperCase()},
+         ${t.nom.trim().toUpperCase()},
+         ${t.date_naissance},
+         ${t.lieu_naissance?.trim() ?? null},
+         ${t.nationalite},
+         ${t.num_passeport.trim().toUpperCase().replace(/\s/g, '')},
+         ${t.expiry_passeport},
+         ${t.email.trim().toLowerCase()},
+         ${t.sexe},
+         'pending')
+    `
+  }
 }
 
 export async function getOrder(id: string): Promise<Order | null> {

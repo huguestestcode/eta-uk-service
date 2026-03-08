@@ -257,32 +257,23 @@ function TravelerCard({
 function IdentitePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const orderId = searchParams.get('order_id')
   const numTravelers = parseInt(searchParams.get('n') ?? '1', 10)
 
+  const [email, setEmail] = useState('')
   const [travelers, setTravelers] = useState<TravelerForm[]>(() =>
     Array.from({ length: Math.max(1, numTravelers) }, () => ({ ...EMPTY_TRAVELER }))
   )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [verifying, setVerifying] = useState(true)
 
-  // Vérifier que la commande est bien payée
   useEffect(() => {
-    if (!orderId) {
+    const storedEmail = sessionStorage.getItem('eta_email')
+    if (!storedEmail) {
       router.replace('/funnel')
       return
     }
-    fetch(`/api/order-status?id=${orderId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.status === 'pending_payment') {
-          setError('Le paiement n\'a pas encore été confirmé. Veuillez patienter ou nous contacter.')
-        }
-      })
-      .catch(() => {})
-      .finally(() => setVerifying(false))
-  }, [orderId, router])
+    setEmail(storedEmail)
+  }, [router])
 
   function updateTraveler(index: number, data: TravelerForm) {
     setTravelers((prev) => prev.map((t, i) => (i === index ? data : t)))
@@ -292,7 +283,6 @@ function IdentitePageInner() {
     e.preventDefault()
     setError('')
 
-    // Vérification déclarations
     for (let i = 0; i < travelers.length; i++) {
       if (!travelers[i].criminal_record || !travelers[i].travel_ban) {
         setError(`Veuillez cocher les deux déclarations pour le voyageur ${i + 1}.`)
@@ -300,22 +290,31 @@ function IdentitePageInner() {
       }
     }
 
+    if (!email) {
+      router.replace('/funnel')
+      return
+    }
+
     setLoading(true)
     try {
-      const res = await fetch('/api/submit-travelers', {
+      const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, travelers }),
+        body: JSON.stringify({ email, numTravelers, travelers }),
       })
 
       const data = await res.json()
 
-      if (!res.ok) {
-        setError(data.error ?? 'Une erreur est survenue.')
+      if (!res.ok || !data.url) {
+        setError(data.error ?? 'Une erreur est survenue. Veuillez réessayer.')
         return
       }
 
-      router.push(`/confirmation?order_id=${orderId}`)
+      // Nettoyer le sessionStorage avant la redirection
+      sessionStorage.removeItem('eta_email')
+      sessionStorage.removeItem('eta_num_travelers')
+
+      window.location.href = data.url
     } catch {
       setError('Erreur de connexion. Veuillez réessayer.')
     } finally {
@@ -323,19 +322,7 @@ function IdentitePageInner() {
     }
   }
 
-  if (verifying) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <svg className="w-10 h-10 animate-spin text-navy-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <p className="text-gray-500">Vérification du paiement…</p>
-        </div>
-      </div>
-    )
-  }
+  const total = numTravelers * 39
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -361,14 +348,14 @@ function IdentitePageInner() {
               Commande
             </div>
             <div className="flex-1 h-0.5 bg-green-300 rounded" />
-            <div className="flex items-center gap-1.5 text-green-600 font-semibold">
-              <div className="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center">✓</div>
-              Paiement
-            </div>
-            <div className="flex-1 h-0.5 bg-green-300 rounded" />
             <div className="flex items-center gap-1.5 text-navy-900 font-semibold">
-              <div className="w-6 h-6 rounded-full bg-navy-900 text-white text-xs flex items-center justify-center font-bold">3</div>
+              <div className="w-6 h-6 rounded-full bg-navy-900 text-white text-xs flex items-center justify-center font-bold">2</div>
               Identités
+            </div>
+            <div className="flex-1 h-0.5 bg-gray-200 rounded" />
+            <div className="flex items-center gap-1.5 text-gray-400">
+              <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-400 text-xs flex items-center justify-center font-bold">3</div>
+              Paiement
             </div>
           </div>
         </div>
@@ -377,12 +364,6 @@ function IdentitePageInner() {
       <main className="flex-1 py-10">
         <div className="max-w-2xl mx-auto px-4">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium px-4 py-2 rounded-full mb-4">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Paiement confirmé
-            </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-navy-900">
               Informations des voyageurs
             </h1>
@@ -409,15 +390,31 @@ function IdentitePageInner() {
               </div>
             )}
 
-            <div className="bg-navy-50 border border-navy-100 rounded-xl p-4 text-sm text-navy-700">
-              <strong>Après soumission :</strong> notre agent IA traitera vos demandes immédiatement.
-              Vous recevrez les résultats par email dans un délai de quelques heures (maximum 24h).
+            {/* Récapitulatif prix */}
+            <div className="bg-navy-900 text-white rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold">Récapitulatif</span>
+              </div>
+              <div className="space-y-2 text-sm text-white/80 mb-4">
+                <div className="flex justify-between">
+                  <span>ETA UK × {numTravelers} personne{numTravelers > 1 ? 's' : ''}</span>
+                  <span>{total}€</span>
+                </div>
+                <div className="flex justify-between text-xs text-white/50">
+                  <span>dont frais gouvernementaux UK inclus</span>
+                  <span>{numTravelers * 10}£ (~{Math.round(numTravelers * 11.5)}€)</span>
+                </div>
+              </div>
+              <div className="flex justify-between font-extrabold text-lg border-t border-white/20 pt-3">
+                <span>Total</span>
+                <span>{total}€ TTC</span>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-navy-900 hover:bg-navy-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
+              className="w-full bg-gold-500 hover:bg-gold-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-5 rounded-xl text-xl transition-colors shadow-lg flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -425,17 +422,38 @@ function IdentitePageInner() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Envoi en cours…
+                  Chargement…
                 </>
               ) : (
                 <>
-                  Soumettre mes demandes ETA
+                  Payer {total}€ – Finaliser
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </>
               )}
             </button>
+
+            <div className="flex justify-center gap-6 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                SSL sécurisé
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                Remboursé si refus
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                </svg>
+                Stripe
+              </span>
+            </div>
           </form>
         </div>
       </main>
