@@ -18,10 +18,10 @@ const VIEWPORT = { width: 1280, height: 800 }
 // ─── Point d'entrée principal ────────────────────────────────────────────────
 
 export async function processOrder(orderId: string, orderEmail: string): Promise<void> {
-  const travelers = getTravelersByOrder(orderId)
+  const travelers = await getTravelersByOrder(orderId)
   if (!travelers.length) return
 
-  updateOrderStatus(orderId, 'processing')
+  await updateOrderStatus(orderId, 'processing')
 
   let browser: Browser | null = null
   try {
@@ -34,18 +34,17 @@ export async function processOrder(orderId: string, orderEmail: string): Promise
       await processSingleETA(browser, traveler)
     }
 
-    // Vérifier si toutes les ETA ont réussi
-    const updated = getTravelersByOrder(orderId)
+    const updated = await getTravelersByOrder(orderId)
     const allDone = updated.every((t) => t.eta_status !== 'pending' && t.eta_status !== 'processing')
 
     if (allDone) {
       const allApproved = updated.every((t) => t.eta_status === 'approved')
-      updateOrderStatus(orderId, allApproved ? 'completed' : 'failed')
+      await updateOrderStatus(orderId, allApproved ? 'completed' : 'failed')
       await sendETAResults(orderEmail, updated)
     }
   } catch (err) {
     console.error('[ETA Agent] Erreur globale:', err)
-    updateOrderStatus(orderId, 'failed')
+    await updateOrderStatus(orderId, 'failed')
   } finally {
     if (browser) await browser.close()
   }
@@ -54,7 +53,7 @@ export async function processOrder(orderId: string, orderEmail: string): Promise
 // ─── Traitement d'un voyageur ─────────────────────────────────────────────────
 
 async function processSingleETA(browser: Browser, traveler: Traveler): Promise<void> {
-  updateTraveler(traveler.id, { eta_status: 'processing' })
+  await updateTraveler(traveler.id, { eta_status: 'processing' })
 
   const context = await browser.newContext({
     viewport: VIEWPORT,
@@ -75,18 +74,18 @@ async function processSingleETA(browser: Browser, traveler: Traveler): Promise<v
     const result = await runComputerUseAgent(page, traveler)
 
     if (result.success) {
-      updateTraveler(traveler.id, {
+      await updateTraveler(traveler.id, {
         eta_status: 'approved',
         eta_reference: result.reference,
       })
     } else {
-      updateTraveler(traveler.id, {
+      await updateTraveler(traveler.id, {
         eta_status: 'failed',
         eta_error: result.error ?? 'Erreur inconnue',
       })
     }
   } catch (err) {
-    updateTraveler(traveler.id, {
+    await updateTraveler(traveler.id, {
       eta_status: 'failed',
       eta_error: String(err),
     })

@@ -3,13 +3,6 @@ import { getOrderBySessionId, getOrder, updateOrderStatus, initTravelers } from 
 import { stripe } from '@/lib/stripe'
 import { sendPaymentConfirmation } from '@/lib/email'
 
-/**
- * GET /api/order-status?id=[orderId|sessionId]
- *
- * Vérifie le statut d'une commande. Si le paiement est confirmé par Stripe
- * mais pas encore enregistré via webhook, on le marque comme payé ici
- * (fallback pour les redirections directes).
- */
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (!id) {
@@ -17,24 +10,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // L'ID peut être un orderId DB ou un Stripe session ID
-    let order = getOrder(id) ?? getOrderBySessionId(id)
+    let order = (await getOrder(id)) ?? (await getOrderBySessionId(id))
 
     if (!order) {
       return NextResponse.json({ error: 'Commande introuvable.' }, { status: 404 })
     }
 
-    // Si toujours en attente de paiement, vérifier directement auprès de Stripe
     if (order.status === 'pending_payment' && order.stripe_session_id) {
       const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
 
       if (session.payment_status === 'paid') {
-        updateOrderStatus(order.id, 'paid', {
+        await updateOrderStatus(order.id, 'paid', {
           amount_paid: session.amount_total ?? 0,
           stripe_payment_intent:
             typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
         })
-        initTravelers(order.id, order.num_travelers)
+        await initTravelers(order.id, order.num_travelers)
 
         try {
           await sendPaymentConfirmation(order.email, order.id, order.num_travelers)
@@ -42,7 +33,7 @@ export async function GET(req: NextRequest) {
           // Non bloquant
         }
 
-        order = getOrder(order.id)!
+        order = (await getOrder(order.id))!
       }
     }
 

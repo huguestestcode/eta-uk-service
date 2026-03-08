@@ -15,9 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
-    const totalCents = SERVICE_PRICE_CENTS * numTravelers
 
-    // Créer la session Stripe Checkout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -48,8 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Impossible de créer la session de paiement.' }, { status: 500 })
     }
 
-    // Créer la commande en base avec le session ID (= orderId temporaire)
-    createOrder(email, numTravelers, session.id)
+    await createOrder(email, numTravelers, session.id)
 
     return NextResponse.json({ url: session.url })
   } catch (err) {

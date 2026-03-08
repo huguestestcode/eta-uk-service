@@ -30,8 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Données invalides.' }, { status: 400 })
     }
 
-    // Retrouver la commande (peut être un session ID Stripe ou un UUID DB)
-    const order = getOrder(orderId) ?? getOrderBySessionId(orderId)
+    const order = (await getOrder(orderId)) ?? (await getOrderBySessionId(orderId))
 
     if (!order) {
       return NextResponse.json({ error: 'Commande introuvable.' }, { status: 404 })
@@ -44,7 +43,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Valider chaque voyageur
     for (let i = 0; i < travelers.length; i++) {
       const t = travelers[i]
       if (!t.prenom || !t.nom || !t.date_naissance || !t.num_passeport || !t.expiry_passeport || !t.email || !t.sexe) {
@@ -53,7 +51,6 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
-      // Passeport non expiré
       if (new Date(t.expiry_passeport) <= new Date()) {
         return NextResponse.json(
           { error: `Le passeport du voyageur ${i + 1} est expiré.` },
@@ -62,8 +59,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Récupérer les slots voyageurs créés lors du paiement
-    const slots = getTravelersByOrder(order.id)
+    const slots = await getTravelersByOrder(order.id)
 
     if (slots.length < travelers.length) {
       return NextResponse.json(
@@ -72,10 +68,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Enregistrer les données de chaque voyageur
     for (let i = 0; i < travelers.length; i++) {
       const t = travelers[i]
-      updateTraveler(slots[i].id, {
+      await updateTraveler(slots[i].id, {
         prenom: t.prenom.trim().toUpperCase(),
         nom: t.nom.trim().toUpperCase(),
         date_naissance: t.date_naissance,
@@ -89,10 +84,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    updateOrderStatus(order.id, 'identity_submitted')
+    await updateOrderStatus(order.id, 'identity_submitted')
 
-    // Lancer l'agent IA en arrière-plan (fire & forget)
-    // On ne bloque pas la réponse HTTP
     launchAgent(order.id, order.email).catch((err) => {
       console.error('[submit-travelers] Agent error:', err)
     })
