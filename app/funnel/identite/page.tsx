@@ -322,9 +322,9 @@ function IdentitePageInner() {
     }
   }
 
-  const PRICE_SERVICE = 27
-  const PRICE_GOV_GBP = 10
-  const PRICE_GOV_EUR = 12
+  const PRICE_SERVICE = 20
+  const PRICE_GOV_GBP = 16
+  const PRICE_GOV_EUR = 19
   const total         = numTravelers * (PRICE_SERVICE + PRICE_GOV_EUR)
   const totalService  = numTravelers * PRICE_SERVICE
   const totalGovGBP   = numTravelers * PRICE_GOV_GBP

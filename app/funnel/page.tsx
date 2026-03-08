@@ -7,9 +7,9 @@ import Link from 'next/link'
 const TRAVELER_OPTIONS = [1, 2, 3, 4, 5, 6]
 
 // Prix
-const PRICE_SERVICE = 27   // € par personne
-const PRICE_GOV_GBP = 10   // £ par personne
-const PRICE_GOV_EUR = 12   // € équivalent
+const PRICE_SERVICE = 20   // € par personne
+const PRICE_GOV_GBP = 16   // £ par personne
+const PRICE_GOV_EUR = 19   // € équivalent
 const PRICE_TOTAL = PRICE_SERVICE + PRICE_GOV_EUR // 39€
 
 export default function FunnelPage() {
